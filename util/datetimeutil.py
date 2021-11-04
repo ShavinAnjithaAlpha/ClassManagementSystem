@@ -16,4 +16,30 @@ class DateTimeUtil:
         if (new_min > min_time and new_min < max_time):
             return True
 
+    @staticmethod
+    def gradeFromText(date : str):
+
+        y, m, d = date.split("-")
+        date = QDate(int(y), int(m), int(d))
+
+        diff = QDate().currentDate().year() - date.year() -  6
+
+        if int(m) == 1:
+            diff += 1
+
+        if diff == 14:
+            return diff - 1
+        return diff
+
+    @staticmethod
+    def grade(date : QDate):
+
+        diff = QDate().currentDate().year() - date.year() - 6
+
+        if date.month() == 1:
+            diff += 1
+
+        if diff == 14:
+            return diff - 1
+        return diff
 

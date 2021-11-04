@@ -1,48 +1,31 @@
 import sqlite3
 
 from PyQt5.QtCore import QDate
+from file_manager.db_manager import DBManager
 
 db_file = "db/main.db"
 SEX = {"male" : 0, "female" : 1, "other" : 2}
 
-class DBManager:
-    def __init__(self, db_file : str, save_config  = True):
-        self.db_file = db_file
-        self.save_config = save_config
-
-    def __enter__(self):
-        #create the connection and return it
-        self.connect = sqlite3.connect(self.db_file)
-
-        return self.connect.cursor()
-
-    def __exit__(self):
-
-        if self.save_config:
-            self.connect.commit()
-
-        self.connect.close()
-        del self
-
 class StudentManager:
 
     param = {
-        ["firstName", "fName", "firstname", "first_name", "FirstName"] : "firstName",
-        ["lastName", "lName", "lastname", "last_name", "LastName"] : "lastName",
-        ["address", "Address", "adr", "Adr"] : "address",
-        ["sex", "Sex", "sexual"] : "sex",
-        ["telNum", "num", "TelNum", "telephoneNumber", "telephone_number"] : "telNumber",
-        ["parTelNum", "parNum", "parMobNum", "parent_mobile_number", "parentMobileNumber"] : "parTelNum",
-        ["id", "index", "Index", "i"] : "id",
-        ["bDay", "birthDay", "birth_day", "birthday", "BirthDay"] : "birthDay",
-        ["eDay", "enteredDay", "enterDay", "enter_day", "entered_day" , "eday"] : "enteredDay"
+        "firstName" : ["firstName", "fName", "firstname", "first_name", "FirstName"],
+        "lastName" : ["lastName", "lName", "lastname", "last_name", "LastName"],
+        "address" : ["address", "Address", "adr", "Adr"],
+        "sex" : ["sex", "Sex", "sexual"],
+        "telNumber" : ["telNum", "num", "TelNum", "telephoneNumber", "telephone_number"],
+        "parTelNumber" : ["parTelNum", "parNum", "parMobNum", "parent_mobile_number", "parentMobileNumber"],
+        "id" : ["id", "index", "Index", "i", "ID"],
+        "birthDay" : ["bDay", "birthDay", "birth_day", "birthday", "BirthDay"],
+        "enteredDay" : ["eDay", "enteredDay", "enterDay", "enter_day", "entered_day" , "eday"],
+        "school" : ["school", "School", "sch", "Sch"]
     }
 
     @staticmethod
     def getKey(text : str):
         for key in StudentManager.param.keys():
-            if (text in key):
-                return StudentManager.param.get(key)
+            if (text in StudentManager.param.get(key)):
+                return key
 
         return None
 
@@ -58,24 +41,26 @@ class StudentManager:
                                                               telNumber TEXT,
                                                               parTelNumber TEXT NOT NULL,
                                                               birthDay TEXT NOT NULL,
+                                                              school TEXT NOT NULL,
                                                               enteredDay TEXT NOT NULL,
                                                               sex INTEGER NOT NULL)""")
 
     def addStudent(self, details : dict):
         # create the connection and
         with DBManager(db_file) as cursor:
-            # getthe data from the ditionary
+            # get the data from the ditionary
             fName , lName = details["firstName"], details["lastName"]
             add = details["address"]
             num , parNum = details.get("telNumber" , None) , details["parTelNumber"]
             bday = details["birthDay"]
             sex = SEX.get(details["sex"], 2)
+            school = details["school"]
 
             eday = QDate().currentDate().toString("yyyy MM dd")
 
             cursor.execute(f""" INSERT INTO student_table(firstName, lastName, address, telNumber , 
-                                                                    parTelNumber , birthDay, enteredDay, sex)
-                                VALUES('{fName}', '{lName}', '{add}', '{num}', '{parNum}', '{bday}', '{eday}', {sex})""")
+                                                                    parTelNumber , birthDay, school ,enteredDay, sex)
+                                VALUES('{fName}', '{lName}', '{add}', '{num}', '{parNum}', '{bday}', '{school}' ,'{eday}', {sex})""")
 
     def addStudents(self, detail_list : list[dict]):
             with DBManager(db_file) as cursor:
@@ -86,54 +71,55 @@ class StudentManager:
                     num, parNum = details.get("telNumber", None), details["parTelNumber"]
                     bday = details["birthDay"]
                     sex = SEX.get(details["sex"], 2)
+                    school = details["school"]
 
                     eday = QDate().currentDate().toString("yyyy MM dd")
 
                     cursor.execute(f""" INSERT INTO student_table(firstName, lastName, address, telNumber , 
-                                                                                       parTelNumber , birthDay, enteredDay, sex)
-                                                   VALUES('{fName}', '{lName}', '{add}', '{num}', '{parNum}', '{bday}', '{eday}', {sex})""")
+                                                                parTelNumber , birthDay, enteredDay, sex)
+                                    VALUES('{fName}', '{lName}', '{add}', '{num}', '{parNum}', '{bday}', '{school}' , '{eday}', {sex})""")
 
 
-    def get(self, index : int , key  : str):
-        key = StudentManager.getKey(key)
+    def get(self, index : int , key : str):
+        key_ = StudentManager.getKey(key)
 
-        if key:
+        if key_:
             with DBManager(db_file ,False) as cursor:
                 try:
-                    cursor.execute(f""" SELECT {key} FROM student_table WHERE id = {index} """)
+                    cursor.execute(f""" SELECT {key_} FROM student_table WHERE id = {index} """)
                     return cursor.fetchall()[0][0]
                 except:
                     raise IndexError()
         else:
             return None
 
-    def get(self, indexes : list[int] , key  :str):
-        key = StudentManager.getKey(key)
+    def gets(self, indexes : list[int] , key  :str):
+        key_ = StudentManager.getKey(key)
 
         data = []
-        if key:
+        if key_:
             with DBManager(db_file, False) as cursor:
                 for id in indexes:
                     try:
-                        cursor.execute(f""" SELECT {key} FROM student_table WHERE id = {id} """)
+                        cursor.execute(f""" SELECT {key_} FROM student_table WHERE id = {id} """)
                         data.append(cursor.fetchall()[0][0])
                     except:
                         data.append(-1)
 
         return data
 
-    def get(self, key : str):
-        key = StudentManager.getKey(key)
-        if key:
+    def getFromKey(self, key : str):
+        key_ = StudentManager.getKey(key)
+        if key_:
             with DBManager(db_file, False) as cursor:
-                cursor.execute(f"""SELECT {key} FROM student_table """)
+                cursor.execute(f"""SELECT {key_} FROM student_table """)
                 data = [item[0] for item in cursor.fetchall()]
         else:
             data = None
 
         return data
 
-    def get(self, index : int):
+    def getFromIndex(self, index : int):
         with DBManager(db_file, False) as cursor:
             try:
                 cursor.execute(f"""SELECT * FROM student_table WHERE id = {index} """)
@@ -144,12 +130,12 @@ class StudentManager:
         return data
 
     def set(self, index : int , key : str , new_value : str):
-        key = StudentManager.getKey(key)
-        if key:
+        key_ = StudentManager.getKey(key)
+        if key_:
             with DBManager(db_file) as cursor:
                 try:
-                    if (key != "id" and key != "sex"):
-                        cursor.execute(f"""UPDATE student_table SET {key} = '{new_value}' WHERE id = {index} """)
+                    if (key_ != "id" and key_ != "sex"):
+                        cursor.execute(f"""UPDATE student_table SET {key_} = '{new_value}' WHERE id = {index} """)
                     else:
                         raise PermissionError()
                 except:
@@ -167,13 +153,13 @@ class StudentManager:
 
     def getID(self, key1 , value1 , key2, value2) -> int:
 
-        key1 = StudentManager.getKey(key1)
-        key2 = StudentManager.getKey(key2)
+        key1_ = StudentManager.getKey(key1)
+        key2_ = StudentManager.getKey(key2)
 
-        if key1 and key2:
+        if key1_ and key2_:
             with DBManager(db_file) as cursor:
                 try:
-                    cursor.execute(f"""SELECT id FROM student_table WHERE {key1} = '{value1}' AND {key2} = '{value2}' """)
+                    cursor.execute(f"""SELECT id FROM student_table WHERE {key1_} = '{value1}' AND {key2_} = '{value2}' """)
                     return cursor.fetchall()[0][0]
                 except:
                     raise KeyError
