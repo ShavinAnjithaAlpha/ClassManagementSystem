@@ -1,5 +1,5 @@
 # ClassManagementSystem
-Small system for managing educational innstitute.
+<p> Class Management System is a primary system for managing education institutes and their other activities. In this system, you can find the student management area, class time management area, task management area, daily student record area, payment area, and exam management area. In the student management area, you can register a student to the system, remove students, search student/s, find basic information about these students, filter students over the different criteria, and also update students. In the class time management area, you can find the timetable for an institute, add new classes and times to the system, change class times, and there is a calendar view for managing your daily work with your timetable. The daily student record area helps to keep the student's class arrival records and find student arrival records at any time. In the task management area, you can beautifully arrange your task with add notes, files, images, and more. I will be looking to build this system to a more advanced level in the future by upgrading these areas and completing the other non-implemented areas yet.</p>
 
 Here Some SS of the GUI
 
