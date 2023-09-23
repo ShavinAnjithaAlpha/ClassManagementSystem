@@ -33,6 +33,12 @@ style_sheets = """
                     margin-top: 1ex; /* leave space at the top for the title */
 }
                         
-        
+        QLabel#des_label {font-size : 16px;
+                            color : rgb(150, 150, 150);}
+                            
+        QLineEdit#passwordBox {border : 1px solid blue;}
+                            
+        QLineEdit#passwordBox:focus {border : none;
+                                    border-bottom : 2px solid blue;}
             
             """

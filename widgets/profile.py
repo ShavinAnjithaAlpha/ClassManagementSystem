@@ -3,7 +3,7 @@ import shutil
 
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QGroupBox, QFormLayout, QVBoxLayout,
-                             QFileDialog, QScrollArea)
+                             QFileDialog, QScrollArea, QGridLayout)
 from PyQt5.QtCore import Qt, QSize
 
 from style_sheets.profile_style_sheet import style_sheets
@@ -162,6 +162,10 @@ class Profile(QWidget):
         hbox.addWidget(change_button)
         hbox.addStretch()
 
+        # create the security box
+        security_box = QGroupBox("Security")
+        self.setUpSecurityBox(security_box)
+
         base = QWidget()
         base.setObjectName("base")
         scroll_area.setWidget(base)
@@ -170,10 +174,46 @@ class Profile(QWidget):
         vbox.addWidget(group_box1)
         vbox.addWidget(group_box2)
         vbox.addWidget(group_box3)
+        vbox.addWidget(security_box)
         vbox.addLayout(hbox)
 
         base.setLayout(vbox)
         self.setStyleSheet(style_sheets)
+
+    def setUpSecurityBox(self, box : QGroupBox):
+
+        # create the grid layout for this
+        grid = QGridLayout()
+
+        # create the password section
+        des_label1 = QLabel("""Password give the authorized access to this system and confirm some\n
+                                high priority processes.""")
+        des_label1.setAlignment(Qt.AlignLeft)
+        des_label1.setObjectName("des_label")
+
+        grid.addWidget(des_label1, 0, 0, 1, 4)
+        grid.addWidget(QLabel("Current Password"), 1, 1)
+        grid.addWidget(QLabel("New Password"), 1, 2)
+        grid.addWidget(QLabel("Confirm Password"), 1, 3)
+        grid.addWidget(QLabel("Change Password"), 2, 0)
+
+        self.current_pw_box = QLineEdit()
+        self.current_pw_box.setEchoMode(QLineEdit.Password)
+        self.current_pw_box.setObjectName("passwordBox")
+
+        self.new_pw_box = QLineEdit()
+        self.new_pw_box.setEchoMode(QLineEdit.Password)
+        self.new_pw_box.setObjectName("passwordBox")
+
+        self.confirm_pw_box = QLineEdit()
+        self.confirm_pw_box.setEchoMode(QLineEdit.Password)
+        self.confirm_pw_box.setObjectName("passwordBox")
+
+        grid.addWidget(self.current_pw_box, 2, 1)
+        grid.addWidget(self.new_pw_box, 2, 2)
+        grid.addWidget(self.confirm_pw_box, 2, 3)
+
+        box.setLayout(grid)
 
     def changeWallpaper(self):
 

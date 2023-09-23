@@ -6,12 +6,13 @@ import sys
 from PyQt5.QtGui import QColor, QPalette, QFont, QIcon
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QStackedLayout, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QDesktopWidget, QFrame, QGridLayout, QGraphicsDropShadowEffect,
-                             QInputDialog, QLineEdit, QMessageBox, QFileDialog)
+                             QInputDialog, QLineEdit, QMessageBox, QFileDialog, QDateTimeEdit)
 from PyQt5.QtCore import QSize, Qt, QPropertyAnimation, QTime, QDate, QTimer, QEasingCurve
 from PyQt5.QtGui import QColor
 
 from file_manager.class_manager import ClassManager
 from file_manager.student_manager import StudentManager
+from file_manager.task_manager import TaskManger
 
 from widgets.time_table import TimeTableWidget
 from widgets.containers import ContainerWidget
@@ -20,6 +21,10 @@ from widgets.daily_class_bar import DailyClassBar
 from widgets.class_initializer import ClassInitializerWidget
 from widgets.profile import Profile
 from widgets.register_widgets.main_widget import Registor
+from widgets.calander_widget import Calander
+
+from widgets.task_widgets.task_widget import QuickTaskWidget
+from widgets.task_widgets.main_task_page import TaskPage
 
 from dialogs.class_dialog import classDialog
 from dialogs.student_dialog import StudentDialog
@@ -27,6 +32,7 @@ from dialogs.user_dialog import UserDialog
 
 from util.logger import Logger
 from style_sheets.main_style_sheet import main_style_sheet
+from style_sheets.dark_style_sheets.main_style_sheet_dark import main_style_sheet_dark
 
 week_days = ["Monday", "TuesDay", "WednesDay", "ThursDay", "FriDay", "SaturDay", "SunDay"]
 
@@ -57,6 +63,15 @@ class ClassManagementSystem(QMainWindow):
 
         if not os.path.exists("db/classes"):
             os.mkdir("db/classes")
+
+        if not os.path.exists("db/classes_history"):
+            os.mkdir("db/classes_history")
+
+        # create the task folder system
+        if not os.path.exists("db/tasks"):
+            os.mkdir("db/tasks")
+            os.mkdir("db/tasks/data")
+            os.mkdir("db/tasks/files")
 
     def logToSystem(self):
 
@@ -162,7 +177,7 @@ class ClassManagementSystem(QMainWindow):
         show_hide_button.pressed.connect(self.showAndHidePanel)
         show_hide_button.setFont(QFont("Hack", 12))
 
-        # create the hbox for this
+        # create the h box for this
         hbox1 = QHBoxLayout()
         hbox1.addWidget(show_hide_button)
         hbox1.addStretch()
@@ -176,6 +191,73 @@ class ClassManagementSystem(QMainWindow):
         side_panel_vbox.addLayout(action_vbox)
         side_panel_vbox.addStretch()
 
+        # create the quick task manager bar
+        self.setUpQuickTaskManager(side_panel_vbox)
+
+    def setUpQuickTaskManager(self, layout : QVBoxLayout):
+
+        def showEdit(widget1 : QLineEdit , widget2 : QDateTimeEdit):
+            widget1.setVisible(True)
+            widget2.setVisible(True)
+
+        # create the vbox for this
+        task_add_vbox = QVBoxLayout()
+        task_add_vbox.setContentsMargins(0, 0, 0, 0)
+        task_add_vbox.setSpacing(0)
+        task_add_vbox.setContentsMargins(0, 0, 0, 0)
+
+        # load the tasks
+        self.loadTasks(task_add_vbox)
+
+        # create the task create the widget
+        task_field = QLineEdit()
+        task_field.setVisible(False)
+        task_field.setPlaceholderText("New Task")
+        task_field.setObjectName("new_task_field")
+
+        # create the date time edir
+        dateTimeEdit = QDateTimeEdit()
+        dateTimeEdit.setCalendarPopup(True)
+        dateTimeEdit.setVisible(False)
+
+        plus_label = QPushButton("+ New Task")
+        plus_label.setObjectName("plus_button")
+        plus_label.pressed.connect(lambda w1=task_field, w2=dateTimeEdit : showEdit(w1, w2))
+        task_field.returnPressed.connect(lambda w1=task_field, w2=dateTimeEdit, l = task_add_vbox
+                                         : self.addQuickTask(w1, w2, l))
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(task_field)
+        vbox.addWidget(dateTimeEdit)
+        vbox.addWidget(plus_label)
+
+        task_add_vbox.addLayout(vbox)
+        layout.addLayout(task_add_vbox)
+
+    def addQuickTask(self, task_field : QLineEdit, dateTimeEdit : QDateTimeEdit , layout : QVBoxLayout):
+
+        # create the task using this fields
+        TaskManger.addNewtask(task_field.text() , dateTimeEdit.date(), dateTimeEdit.time())
+
+        layout.insertWidget(0, QuickTaskWidget(task_field.text(), QDate.currentDate().toString("yyyy:mm:dd"),
+                                               dateTimeEdit.date().toString("yyyy MMM dd"), dateTimeEdit.time().toString("hh:mm A")))
+        task_field.clear()
+        # hide the widgets
+        task_field.setVisible(False)
+        dateTimeEdit.setVisible(False)
+
+    def loadTasks(self, layout : QVBoxLayout):
+
+        try:
+            # get the task data
+            data = TaskManger.getTasksForMonth(QDate.currentDate().year() , QDate.currentDate().month())[:3]
+
+            for item in data:
+                widget = QuickTaskWidget(item["title"], item["date"], item["end_date"], item["end_time"], item["is_completed"])
+                layout.addWidget(widget)
+        except FileNotFoundError as e:
+            QMessageBox.warning(self, "File Bot Found Error", "cannot find the task json fiel for this month")
+
     def setUpSidePanelActions(self, layout : QVBoxLayout):
 
         # create the profile name label
@@ -187,16 +269,27 @@ class ClassManagementSystem(QMainWindow):
         name_label.setFont(QFont("verdana", 18))
         name_label.setWordWrap(True)
         name_label.setObjectName("name_label")
+        # name_label.setFont(QFont.PreferNoHinting)
 
         # create the actions
         change_walpaper_action = QPushButton("change wallpaper")
         change_walpaper_action.setObjectName("side_panel_action")
         change_walpaper_action.pressed.connect(self.changeWallpaper)
 
+        calander_open_action = QPushButton("Calandar")
+        calander_open_action.setObjectName("side_panel_action")
+        calander_open_action.pressed.connect(self.openCalander)
+
+        task_panel_open_action = QPushButton("Tasks")
+        task_panel_open_action.setObjectName("side_panel_action")
+        task_panel_open_action.pressed.connect(self.openTaskPanel)
+
 
         layout.addWidget(name_label)
         layout.addSpacing(20)
         layout.addWidget(change_walpaper_action)
+        layout.addWidget(calander_open_action)
+        layout.addWidget(task_panel_open_action)
         layout.addStretch()
 
     def showAndHidePanel(self):
@@ -241,8 +334,8 @@ class ClassManagementSystem(QMainWindow):
             button.resize(QSize(button_width, button_height))
 
             shadow = QGraphicsDropShadowEffect()
-            shadow.setColor(QColor(100, 100, 100))
-            shadow.setBlurRadius(40)
+            shadow.setColor(QColor(200, 100, 100))
+            shadow.setBlurRadius(20)
             shadow.setXOffset(10)
             shadow.setYOffset(10)
 
@@ -254,7 +347,7 @@ class ClassManagementSystem(QMainWindow):
             button.move(x0 + (i % 4) * button_width , y0 + (i // 4) * button_height)
 
         # create the time date label
-        dateFont = QFont("Helvetica [Cronyx]", 85)
+        dateFont = QFont("Helvetica", 85)
         dateFont.setBold(True)
         self.date_label = QLabel(QTime().currentTime().toString("hh:mm A"), main_page)
         self.date_label.setFont(dateFont)
@@ -263,7 +356,7 @@ class ClassManagementSystem(QMainWindow):
         current_date = QDate().currentDate()
         week_day = week_days[current_date.dayOfWeek() - 1]
         self.time_label = QLabel("{}    {}".format(current_date.toString("dd MMM yyyy"), week_day), main_page)
-        self.time_label.setFont(QFont("Helvetica [Cronyx]", 25))
+        self.time_label.setFont(QFont("Helvetica", 25))
         self.time_label.setObjectName("timeLabel")
 
         self.date_label.move(main_page.width()  + 200, 0)
@@ -274,7 +367,7 @@ class ClassManagementSystem(QMainWindow):
         self.mainTimer.setInterval(1000)
         self.mainTimer.timeout.connect(self.updateTime)
 
-        # setup the welcome message and profile buttons
+        # set up the welcome message and profile buttons
         self.setUpProfile(main_page)
 
     def setUpProfile(self, page : QWidget):
@@ -306,7 +399,7 @@ class ClassManagementSystem(QMainWindow):
 
     def openTimeTable(self):
 
-        # create the time  table widget
+        # create the timetable widget
         time_table = TimeTableWidget()
         # create the container widget
         container = ContainerWidget(time_table, "Time Table of Classes")
@@ -362,7 +455,23 @@ class ClassManagementSystem(QMainWindow):
     def openRegister(self):
 
         widget = Registor()
-        container = ContainerWidget(widget, "Registor")
+        container = ContainerWidget(widget, "Register")
+
+        self.mainStackLayout.addWidget(container)
+        self.mainStackLayout.setCurrentIndex(1)
+
+    def openCalander(self):
+
+        widget = Calander()
+        container = ContainerWidget(widget, "Calendar")
+
+        self.mainStackLayout.addWidget(container)
+        self.mainStackLayout.setCurrentIndex(1)
+
+    def openTaskPanel(self):
+
+        widget = TaskPage()
+        container = ContainerWidget(widget, "Tasks")
 
         self.mainStackLayout.addWidget(container)
         self.mainStackLayout.setCurrentIndex(1)

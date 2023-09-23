@@ -2,6 +2,17 @@ from PyQt5.QtCore import QDate, QTime, QDateTime
 
 class DateTimeUtil:
 
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    months  = [QDate.shortMonthName(i) for i in range(1, 13)]
+
+    @staticmethod
+    def getWeekDay(dayOfWeek : int):
+        if (dayOfWeek > 7):
+            raise IndexError("Week Day cannot exceeds the 7")
+
+
+        return DateTimeUtil.days_of_week[dayOfWeek - 1]
+
     # create the additional static method for utility
     @staticmethod
     def isCrash(ex_time1 : QTime, ex_time2 : QTime , new_time1 : QTime , new_time2 : QTime):

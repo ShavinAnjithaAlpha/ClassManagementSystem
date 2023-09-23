@@ -173,6 +173,26 @@ main_style_sheet = """
                 QTableView {selection-background-color: rgb(0, 0, 150);
                             font-size : 16px;
                             padding : 5px;}
+                            
+                QLineEdit#new_task_field {
+                                background-color : rgba(20, 0, 80, 0.8);
+                                padding : 25px;
+                                min-height : 30px;
+                                font-size : 22px;
+                                color : white;
+                                border : none;
+                                border-radius : 0px;
+                                margin : 0px;}
                                 
+                QPushButton#plus_button {background : rgba(20, 0, 80, 0.8);
+                                    font-size : 25px;
+                                    padding : 12px;
+                                    color : white;
+                                    border : none;
+                                    border-radius : 0px;}
+                
+                QDateTimeEdit {
+                        padding : 7px;
+                        font-size : 20px;}
                 
                         """

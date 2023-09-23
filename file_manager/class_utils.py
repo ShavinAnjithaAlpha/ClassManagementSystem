@@ -35,8 +35,13 @@ class ClassInitializer:
         with open(os.path.join(class_root_path , file_name) , "w") as file:
             json.dump(data ,file, indent=4)
 
+        # create the class history json data file for tracked th class
+        history_file_name = f"{year}@{clz_id}@classhistory.json"
+        with open(os.path.join("db/classes_history", history_file_name), "w") as file:
+            json.dump([], file, indent=4)
+
         # create the new file for registers as the csv file
-        csv_file_name = f"{year}@{clz_id}@class_registor.csv"
+        csv_file_name = f"{year}@{clz_id}@class_register.csv"
         writer = csv.DictWriter(open(os.path.join(class_root_path , csv_file_name) , "w"), fieldnames=["date", "student_id", "state"])
         writer.writeheader()
 
@@ -62,30 +67,36 @@ class ClassInitializer:
             raise IndexError
 
         file_name = f"{year}@{clz_id}@class.json"
-        with open(os.join(class_root_path, file_name)) as file:
+        with open(os.path.join(class_root_path, file_name)) as file:
             class_data = json.load(file)
 
         return class_data["students"]
 
-    def compltedDay(self, cls_id : int , year : int , data : list):
+    def completedDay(self, cls_id : int , year : int , data : list):
 
         # get the class
-        csv_file_name = f"{year}@{cls_id}@class_registor.csv"
+        csv_file_name = f"{year}@{cls_id}@class_register.csv"
         # create the csv writer
         dialect = csv.get_dialect("unix")
         writer = csv.writer(open(os.path.join(class_root_path, csv_file_name), "a"), dialect= dialect)
         # write the data
         date = QDate.currentDate().toString("yyyy:mm:dd")
+
         for item in data:
             id = item[0]
             state = item[1]
-            writer.writerow({
-                "date" : date,
-                "student_id" : id,
-                "state" : state
-            })
+            writer.writerow([date, id, state])
 
-        writer.writerow([])
+        writer.writerow([None, None, None])
 
-        # delete the writer
-        del writer
+        # update the json file for class hostory
+        history_file = f"{year}@{cls_id}@classhistory.json"
+        with open(os.path.join("db/classes_history", history_file)) as file:
+            history = json.load(file)
+
+        # add the today to the class
+        history.append((QDate.currentDate().toString("yyyy:mm:dd"), True))
+        with open(os.path.join("db/classes_history", history_file) ,"w") as file:
+            json.dump(history, file, indent=4)
+
+

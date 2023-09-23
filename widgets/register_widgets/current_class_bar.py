@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QHBoxLayout, QGridLayout, QVBoxLayout
 from PyQt5.QtCore import Qt, QSize, QTime, QDate, pyqtSignal
@@ -36,9 +38,11 @@ class ClassButton(QPushButton):
 
     def initiateUI(self):
 
-        self.setMinimumHeight(250)
+        self.setMinimumHeight(270)
+        self.setMaximumWidth(550)
 
         name_label = QLabel(self.class_name)
+        name_label.setWordWrap(True)
         name_label.setObjectName("name_label")
 
         grade_label = QLabel(f"grade {self.grade}")
@@ -70,7 +74,10 @@ class ClassButton(QPushButton):
                     
                     QPushButton:pressed {background-color  :rgb(0, 0, 200;)}
                     
-                    QLabel#name_label {font-size : 30px;
+                    QLabel {font-family : verdana;
+                            font-size: 22px;}
+                      
+                    QLabel#name_label {font-size : 35px;
                                         font-weight : bold;
                                         color  : rgb(0, 200, 250);}
                     
@@ -98,16 +105,30 @@ class ClassBar(QWidget):
         cls_manager = ClassManager()
         cls_ids = cls_manager.getClassIDFromWeekDay(self.weeK_day)
 
+        # get the current started class ids
+        started_class_files = os.listdir("db/classes")
+        started_ids = [int(file.split("@")[1]) for file in started_class_files]
+
         hbox = QHBoxLayout()
         hbox.setSpacing(20)
         for id in cls_ids:
-            # create the class card widgets
-            cls_widget = ClassButton(id, self.weeK_day)
-            cls_widget.pressed.connect(lambda e = id : self.openRegister(e))
+            if int(id) in started_ids:
+                # create the class card widgets
+                cls_widget = ClassButton(id, self.weeK_day)
+                cls_widget.pressed.connect(lambda e = id : self.openRegister(e))
 
-            hbox.addWidget(cls_widget)
+                hbox.addWidget(cls_widget)
 
-        self.setLayout(hbox)
+        base  = QWidget()
+        base.setObjectName("base")
+        base.setLayout(hbox)
+
+        self.setLayout(QHBoxLayout())
+        self.layout().addWidget(base)
+
+        self.setStyleSheet("""
+                        QWidget#base {border-bottom : 2px solid rgb(100, 100, 150);
+                                    margin : 0px;}""")
 
     def openRegister(self, id : int):
 

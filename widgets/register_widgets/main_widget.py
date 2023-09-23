@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QStackedLayout, QVBoxLayout
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QDate
 
+from widgets.register_widgets.registor_widget import RegisterWidget
 from widgets.register_widgets.current_class_bar import ClassBar
 
 class Registor(QWidget):
@@ -23,11 +24,13 @@ class Registor(QWidget):
 
     def openNewRegistor(self, cls_id : int):
 
-        if isinstance(self.stack_lyt.widget(0) ,Registor):
-            print("close regostor")
+        if self.stack_lyt.count() > 0:
+            self.stack_lyt.widget(0).deleteLater()
 
-        print(cls_id)
+        # create teh new register widget
+        register_widget = RegisterWidget(cls_id, QDate.currentDate().year())
 
+        self.stack_lyt.addWidget(register_widget)
 
 
 

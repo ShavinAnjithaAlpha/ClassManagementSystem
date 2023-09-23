@@ -65,7 +65,7 @@ class StudentManager:
     def addStudents(self, detail_list : list[dict]):
             with DBManager(db_file) as cursor:
                 for details in detail_list:
-                    # get the data from the ditionary
+                    # get the data from the dictionary
                     fName, lName = details["firstName"], details["lastName"]
                     add = details["address"]
                     num, parNum = details.get("telNumber", None), details["parTelNumber"]

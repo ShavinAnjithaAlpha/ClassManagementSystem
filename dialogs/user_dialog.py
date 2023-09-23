@@ -73,7 +73,7 @@ class UserDialog(QDialog):
         form.addRow("Last Name", self.last_name_entry)
         form.addRow("Qualifiers", self.qualify_entry)
         form.addRow("User Name", self.user_name_entry)
-        form.addWidget(QLabel("*user name must be a one word without whtespaces"))
+        form.addWidget(QLabel("*user name must be a one word without white spaces"))
 
         group.setLayout(form)
 
